@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="zh-HK"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fast Fax Food 騎手</title><style>
+*{box-sizing:border-box;margin:0}body{font-family:system-ui,"PingFang HK",sans-serif;background:#ffc700;color:#14213d}
+@keyframes up{from{opacity:0;transform:translateY(16px)}}@keyframes ride{from{left:-60px}to{left:100%}}@keyframes pu{50%{transform:scale(1.04)}}
+#lg{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}#lg b{font-size:64px;display:block;animation:ride2 2s infinite alternate}
+@keyframes ride2{from{transform:translateX(-40px)}to{transform:translateX(40px)}}
+input{padding:12px;border-radius:10px;border:0;width:240px}
+button{border:0;border-radius:10px;background:#14213d;color:#fff;padding:10px 16px;font-weight:800;cursor:pointer;transition:.15s}button:active{transform:scale(.9)}
+header{background:#14213d;color:#fff;padding:14px 16px 28px;position:relative;overflow:hidden;display:flex;justify-content:space-between}header i{position:absolute;bottom:0;font-size:24px;font-style:normal;animation:ride 4s linear infinite}
+.w{max-width:600px;margin:auto;padding:14px}.c{background:#fff;border-radius:16px;padding:14px;margin:10px 0;animation:up .4s both}.n{animation:pu 1.2s infinite;border:3px solid #e8312f}
+</style></head><body>
+<div id=lg><b>🛵</b><h1>Fast Fax Food 騎手</h1><input id=u placeholder=騎手帳號><input id=p type=password placeholder=密碼><button onclick=go()>上線</button></div>
+<div id=ap hidden></div>
+<script type=module>
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getFirestore,collection,updateDoc,doc,onSnapshot} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const db=getFirestore(initializeApp({apiKey:"AIzaSyDE5ph-uHazh6m0Q4ENeGirLHEI59Cpfhw",authDomain:"uspp1-cd038.firebaseapp.com",projectId:"uspp1-cd038",storageBucket:"uspp1-cd038.firebasestorage.app",messagingSenderId:"118206137592",appId:"1:118206137592:web:00879c764b12eb2e25270d"}));
+const $=i=>document.getElementById(i),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])),F=10;
+let U,R=[],O=[];
+const sub=(n,f)=>onSnapshot(collection(db,n),s=>{f(s.docs.map(d=>({id:d.id,...d.data()})));U&&draw()});
+sub("riders",x=>R=x);sub("orders",x=>O=x);
+window.go=()=>{const r=R.find(x=>x.user==$("u").value.trim()&&x.pass==$("p").value);if(!r)return alert("帳號或密碼錯誤");U=r.id;$("lg").hidden=1;$("ap").hidden=0;draw()};
+window.take=id=>{const r=R.find(x=>x.id==U);updateDoc(doc(db,"orders",id),{status:"delivering",rid:U,rn:r.name})};
+window.fin=id=>updateDoc(doc(db,"orders",id),{status:"done"});
+const oc=(o,b,c)=>`<div class="c ${c||""}"><b>${esc(o.mn)}</b> → ${esc(o.ad)}<br><small>${o.items.map(i=>esc(i.n)+"×"+i.q).join("、")} · 客戶 ${esc(o.cn)} ${esc(o.ph)}</small><br><br>${b}</div>`;
+function draw(){const r=R.find(x=>x.id==U),av=O.filter(o=>o.status=="ready"&&!o.rid),mine=O.filter(o=>o.rid==U&&o.status=="delivering"),n=O.filter(o=>o.rid==U&&o.status=="done").length;
+$("ap").innerHTML=`<header><b>🛵 ${esc(r.name)}</b><span>已完成 ${n} 單 · 收入 $${n*F}</span><i>🛵💨</i></header><div class=w><h3>我的配送 (${mine.length})</h3>`+(mine.map(o=>oc(o,`<button onclick="fin('${o.id}')">已送達</button>`)).join("")||"<p>暫無進行中的訂單</p>")+`<h3 style="margin-top:18px">可接訂單 (${av.length})</h3>`+(av.map(o=>oc(o,`<button onclick="take('${o.id}')">接單 +$${F}</button>`,"n")).join("")||"<p>等待商戶出餐中…</p>")+"</div>"}
+</script></body></html>
